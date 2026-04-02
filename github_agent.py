@@ -1,72 +1,99 @@
+import logging
+logging.getLogger("langchain").setLevel(logging.ERROR)
+logging.getLogger("langchain_mcp_adapters").setLevel(logging.ERROR)
+
+import warnings
+warnings.filterwarnings("ignore")
+
+import asyncio
 import os
-import re
 from dotenv import load_dotenv
 
+from langchain_mcp_adapters.client import MultiServerMCPClient
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_community.agent_toolkits.github.toolkit import GitHubToolkit
-from langchain_community.utilities.github import GitHubAPIWrapper
 from langchain.agents import create_agent
+
+from langchain_core.chat_history import InMemoryChatMessageHistory
 
 load_dotenv()
 
-required_vars = [
-    "GOOGLE_API_KEY",
-    "GITHUB_APP_ID",
-    "GITHUB_REPOSITORY",
-    "GITHUB_APP_PRIVATE_KEY_PATH",
-]
 
-missing_vars = [var for var in required_vars if not os.getenv(var)]
-if missing_vars:
-    raise ValueError(f"Missing required environment variables: {', '.join(missing_vars)}")
+async def main():
 
-key_path = os.getenv("GITHUB_APP_PRIVATE_KEY_PATH")
-with open(key_path, "r") as f:
-    private_key = f.read()
+    github_config = {
+        "transport": "stdio",
+        "command": "npx",
+        "args": ["@modelcontextprotocol/server-github"],
+        "env": {
+            "GITHUB_PERSONAL_ACCESS_TOKEN": os.getenv("GITHUB_PERSONAL_ACCESS_TOKEN")
+        }
+    }
 
-os.environ["GITHUB_APP_PRIVATE_KEY"] = private_key
+    # Create MCP Client
+    client = MultiServerMCPClient({
+        "github": github_config
+    })
 
-def sanitize_tool_name(name: str) -> str:
-    name = name.lower()
-    name = re.sub(r"[^a-z0-9_]+", "_", name)
-    return name.strip("_")
+    tools = await client.get_tools()
 
-github = GitHubAPIWrapper()
-toolkit = GitHubToolkit.from_github_api_wrapper(github)
-tools = toolkit.get_tools()
+    print("\nAvailable GitHub Tools:\n")
+    for tool in tools:
+        print(f"{tool.name} → {tool.description}")
 
-for tool in tools:
-    tool.name = sanitize_tool_name(tool.name)
 
-llm = ChatGoogleGenerativeAI(
-    model="gemini-2.5-flash-lite",
-    temperature=0,
-)
+    model = ChatGoogleGenerativeAI(
+        model="gemini-2.5-flash-lite",
+        google_api_key=os.getenv("GOOGLE_API_KEY"),
+        temperature=0
+    )
 
-system_prompt = """
-You are a GitHub AI assistant.
 
-You help users interact with a GitHub repository using the available tools.
-Use tools whenever repository actions are required.
-Explain actions briefly and clearly.
+    system_prompt = """
+You are a GitHub assistant.
+
+You have access to GitHub tools.
+
+When the user asks about repositories, issues, pull requests, or code:
+- ALWAYS use the available tools
+- NEVER guess GitHub information
+- Retrieve real data using tools
+
+Use previous conversation context if needed.
 """
 
-agent = create_agent(
-    llm,
-    tools=tools,
-    system_prompt=system_prompt,
-)
+    agent = create_agent(
+        model,
+        tools=tools,
+        system_prompt=system_prompt
+    )
 
-print("GitHub Agent Ready Type 'exit' to quit.\n")
+    
+    chat_history = InMemoryChatMessageHistory()
 
-while True:
-    user_input = input("You: ")
-    if user_input.lower() in {"exit", "quit"}:
-        break
+    print("\nGitHub Agent Ready. Type 'exit' to quit.\n")
 
-    result = agent.invoke({
-    "messages": [
-        {"role": "user", "content": user_input}
-    ]
-    })
-    print(result.get("output", result))
+   
+    while True:
+
+        user_input = input("You: ")
+
+        if user_input.lower() == "exit":
+            print("\nExiting agent...\n")
+            break
+
+        chat_history.add_user_message(user_input)
+
+        messages = chat_history.messages[-8:]
+
+        result = await agent.ainvoke({
+            "messages": messages
+        })
+
+        response = result["messages"][-1].content
+
+        print("\nAgent:", response, "\n")
+
+        chat_history.add_ai_message(response)
+
+
+asyncio.run(main())
