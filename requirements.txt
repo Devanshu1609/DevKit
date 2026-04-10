@@ -1,0 +1,13 @@
+langchain_mcp_adapters
+langchain_google_genai
+langchain_groq
+langchain
+langchain_core
+langchain_chroma
+langchain_text_splitters
+python-dotenv
+fastapi
+pydantic
+uvicorn
+bs4
+atlassian-python-api
