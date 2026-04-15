@@ -44,16 +44,14 @@ An advanced, extensible chatbot platform designed for seamless integration with 
    ```ini
    # Backend
 
-   # OpenAI
-   GOOGLE_API_KEY=<YOUR_OPENAI_API_KEY>
+   # GROQ
+   GROQ_API_KEY=<YOUR_GROQ_API_KEY>
 
-   # Slack
-   SLACK_BOT_TOKEN=<YOUR_SLACK_BOT_TOKEN>
 
    # Jira
    JIRA_API_TOKEN=<YOUR_JIRA_API_TOKEN>
    JIRA_USERNAME=<YOUR_JIRA_USERNAME>
-   JIRA_INSTANCE_URL=https://mifosforge.jira.com
+   JIRA_INSTANCE_URL=<JIRA_URL>
    JIRA_CLOUD=True
 
    # GitHub
@@ -62,27 +60,44 @@ An advanced, extensible chatbot platform designed for seamless integration with 
    GITHUB_BRANCH=main
    GITHUB_BASE_BRANCH=main
    GITHUB_APP_PRIVATE_KEY=<YOUR_GITHUB_APP_PRIVATE_KEY>
+   SLACK_MCP_XOXP_TOK  # User OAuth token (xoxp-...)
+   SLACK_MCP_XOXB_TOKEN  # Bot token (xoxb-...) - limited
+   SLACK_MCP_XOXC_TOKEN  # Browser token (xoxc-...)
+   SLACK_MCP_XOXD_TOKEN # Browser cookie d (xoxd-...)
+   # Server configuration
+   SLACK_MCP_PORT  # Port for SSE/HTTP (default: 13080)
+   SLACK_MCP_HOST  # Host for SSE/HTTP (default: 127.0.0.1)
+   SLACK_MCP_API_KEY  # Bearer token for SSE/HTTP transports
+   # Proxy and network settings
+   SLACK_MCP_PROXY # Proxy URL for outgoing requests
+   SLACK_MCP_USER_AGENT  # Custom User-Agent (Enterprise)
+   SLACK_MCP_CUSTOM_TLS  # Custom TLS (Enterprise Slack)
+   # TLS/SSL settings
+   SLACK_MCP_SERVER_CA  # Path to CA certificate
+   SLACK_MCP_SERVER_CA_TOOLKIT  # HTTPToolkit CA
+   SLACK_MCP_SERVER_CA_INSECURE  # Trust insecure (NOT RECOMMENDED)
+   # Message posting settings
+   SLACK_MCP_ADD_MESSAGE_TOOL  # Enable posting
+   SLACK_MCP_ADD_MESSAGE_MARK  # Auto-mark as read
+   SLACK_MCP_ADD_MESSAGE_UNFURLING  # Enable link unfurling
+   #Cache configuration
+   SLACK_MCP_USERS_CACHE  # Path to users cache file
+   SLACK_MCP_CHANNELS_CACHE  # Path to channels cache
+   # Logging
+   SLACK_MCP_LOG_LEVEL  # debug, info, warn, error
 
    ```
 
-4. **Set up github-app-key**
-   create a folder `/keys` in root directory and create a file `github-app-key.pem` inside it and add following in it :- 
-   ```bash
-   paste you github secret key here
-   ```
-
-
-
-5. **Run server**  
+4. **Run server**  
    Run this bash command to start the backend server.
    For Github_Bot :-
    ```bash
-   github_agent.py
+   python github_agent.py
    ```
 
    For slack_Bot :-
    ```bash
-   python slack_bot.py
+   python slack_agent.py
    ```
 
    For jira_Bot :-
