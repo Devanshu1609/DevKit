@@ -119,8 +119,7 @@ def patch_mcp_tools(tools):
             object.__setattr__(tool, "description", _clean_description(tool.description))
 
         _strip_schema_descriptions(tool)
-        _fix_boolean_schema(tool)  # ✅ change boolean → string in schema
-
+        _fix_boolean_schema(tool) 
         patched.append(tool)
 
     return patched
@@ -157,7 +156,7 @@ async def main():
 
     raw_jira_tools = await client.get_tools()
     print("Raw Jira Tools:", raw_jira_tools)
-    jira_tools = patch_mcp_tools(raw_jira_tools)  # ✅ patch + clean once
+    jira_tools = patch_mcp_tools(raw_jira_tools) 
     print("Patched Jira Tools:", jira_tools)
     stores = initialize_tool_db(jira_tools)
     jira_vs = stores["jira"]
@@ -184,25 +183,25 @@ async def main():
         print("🔧 Filtered Tools:", [t.name for t in filtered_tools])
 
         if not filtered_tools:
-            print("⚠️ No relevant tools found → using JQL")
+            print("No relevant tools found → using JQL")
             decision = False
         else:
             decision = can_tools_handle(user_input, filtered_tools)
 
-        print(f"🧠 Decision: {'JIRA' if decision else 'JQL'}")
+        print(f"Decision: {'JIRA' if decision else 'JQL'}")
 
         if not decision:
-            print("⚡ Using JQL Pipeline...\n")
+            print("Using JQL Pipeline...\n")
             result = await execute_jql_query(user_input)
             response = result["response"]
 
         else:
-            print("⚡ Using MCP Agent...\n")
+            print("Using MCP Agent...\n")
             try:
-                agent = create_agent(      # ✅ correct function
+                agent = create_agent(     
                     model,
                     tools=filtered_tools,
-                    system_prompt=JIRA_SYSTEM_PROMPT,   # ✅ correct param name
+                    system_prompt=JIRA_SYSTEM_PROMPT, 
                 )
                 result = await agent.ainvoke({
                     "messages": chat_history.messages[-8:]
